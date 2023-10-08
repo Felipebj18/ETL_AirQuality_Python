@@ -7,3 +7,4 @@ fecha = customers_json.datos[1][-1].get('fecha')
 m=[]
 for i in range(21):
     m.append(customers_json.datos[i][-1].get('valor'))
+    
