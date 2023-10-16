@@ -1,0 +1,73 @@
+df_final=transform_data(customers_json)
+
+def graph_valor(dataframe):
+    from scipy.interpolate import griddata
+    # Definir las coordenadas de latitud y longitud en el DataFrame
+    lat = dataframe['latitud']
+    lon = dataframe['longitud']
+    valores = dataframe['valor']
+    # Crear un grid de coordenadas de latitud y longitud
+    latitud_grid = np.linspace(lat.min(), lat.max(), 100)  # Ajusta la resolución según tus necesidades
+    longitud_grid = np.linspace(lon.min(), lon.max(), 100)  # Ajusta la resolución según tus necesidades
+    latitud_mesh, longitud_mesh = np.meshgrid(latitud_grid, longitud_grid)
+
+    # Realizar interpolación cúbica de los valores de PM2.5 en el grid
+    grid_interpolado_cubico = griddata((lat, lon), valores, (latitud_mesh, longitud_mesh), method='cubic')
+
+    # Encontrar los puntos en los que la interpolación cúbica no tiene valores
+    puntos_faltantes = np.isnan(grid_interpolado_cubico)
+
+    # Realizar interpolación de vecinos más cercanos en los puntos faltantes
+    grid_interpolado_vecinos = griddata((lat, lon), valores, (latitud_mesh, longitud_mesh), method='nearest')
+
+    # Combinar las interpolaciones: usar la cúbica donde esté disponible y los vecinos más cercanos donde falte
+    grid_interpolado_combinado = np.where(puntos_faltantes, grid_interpolado_vecinos, grid_interpolado_cubico)
+
+    # Crear un gráfico de contorno del resultado combinado
+    plt.figure(figsize=(12, 8))
+    plt.contourf(latitud_mesh, longitud_mesh, grid_interpolado_combinado, cmap='viridis')  # Puedes cambiar el mapa de colores
+    plt.colorbar(label='Valor de PM2.5')
+    plt.xlabel('Latitud')
+    plt.ylabel('Longitud')
+    plt.title('Interpolación Cúbica con Vecinos Más Cercanos en Sectores Faltantes')
+
+    # Mostrar el gráfico
+    plt.show()
+        
+
+def graph_aqi(dataframe):
+    from scipy.interpolate import griddata
+    
+    # Definir las coordenadas de latitud y longitud en el DataFrame
+    lat = dataframe['latitud']
+    lon = dataframe['longitud']
+    aqi = dataframe['aqi']  # Cambiamos de 'valor' a 'aqi'
+    
+    # Crear un grid de coordenadas de latitud y longitud
+    latitud_grid = np.linspace(lat.min(), lat.max(), 100)  # Ajusta la resolución según tus necesidades
+    longitud_grid = np.linspace(lon.min(), lon.max(), 100)  # Ajusta la resolución según tus necesidades
+    latitud_mesh, longitud_mesh = np.meshgrid(latitud_grid, longitud_grid)
+
+    # Realizar interpolación cúbica de los valores de AQI en el grid
+    grid_interpolado_cubico = griddata((lat, lon), aqi, (latitud_mesh, longitud_mesh), method='cubic')
+
+    # Encontrar los puntos en los que la interpolación cúbica no tiene valores
+    puntos_faltantes = np.isnan(grid_interpolado_cubico)
+
+    # Realizar interpolación de vecinos más cercanos en los puntos faltantes
+    grid_interpolado_vecinos = griddata((lat, lon), aqi, (latitud_mesh, longitud_mesh), method='nearest')
+
+    # Combinar las interpolaciones: usar la cúbica donde esté disponible y los vecinos más cercanos donde falte
+    grid_interpolado_combinado = np.where(puntos_faltantes, grid_interpolado_vecinos, grid_interpolado_cubico)
+
+    # Crear un gráfico de contorno del resultado combinado
+    plt.figure(figsize=(12, 8))
+    plt.contourf(latitud_mesh, longitud_mesh, grid_interpolado_combinado, cmap='viridis')  
+    plt.colorbar(label='AQI')
+    plt.xlabel('Latitud')
+    plt.ylabel('Longitud')
+    plt.title('Interpolación Cúbica con Vecinos Más Cercanos en Sectores Faltantes para AQI')
+    plt.pause(5)
+    # Mostrar el gráfico
+    #plt.show()
+    
