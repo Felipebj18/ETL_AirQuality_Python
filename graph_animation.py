@@ -20,28 +20,22 @@ def update(frame):
     lon = df_hora['longitud']
     aqi = df_hora['aqi']
 
-    latitud_grid = np.linspace(lat.min(), lat.max(), 100)
+    # Intercambia latitud y longitud en el siguiente bloque
     longitud_grid = np.linspace(lon.min(), lon.max(), 100)
-    latitud_mesh, longitud_mesh = np.meshgrid(latitud_grid, longitud_grid)
+    latitud_grid = np.linspace(lat.min(), lat.max(), 100)
+    longitud_mesh, latitud_mesh = np.meshgrid(longitud_grid, latitud_grid)
 
     #interpolado combinado
-    # grid_interpolado_cubico = griddata((lat, lon), aqi, (latitud_mesh, longitud_mesh), method='cubic')
-    # puntos_faltantes = np.isnan(grid_interpolado_cubico)
-    # grid_interpolado_vecinos = griddata((lat, lon), aqi, (latitud_mesh, longitud_mesh), method='nearest')
-    # grid_interpolado_combinado = np.where(puntos_faltantes, grid_interpolado_vecinos, grid_interpolado_cubico)
+    grid_interpolado_cubico = griddata((lon, lat), aqi, (longitud_mesh, latitud_mesh), method='cubic')
+    puntos_faltantes = np.isnan(grid_interpolado_cubico)
+    grid_interpolado_vecinos = griddata((lon, lat), aqi, (longitud_mesh, latitud_mesh), method='nearest')
+    grid_interpolado_combinado = np.where(puntos_faltantes, grid_interpolado_vecinos, grid_interpolado_cubico)
 
-    # ax.contourf(latitud_mesh, longitud_mesh, grid_interpolado_combinado, cmap='YlOrRd')  
-    # ax.set_xlabel('Latitud')
-    # ax.set_ylabel('Longitud')
-    # ax.set_title(f'Interpolación Cúbica con Vecinos Más Cercanos en Sectores Faltantes para AQI {frame}')
+    ax.contourf(longitud_mesh, latitud_mesh, grid_interpolado_combinado, cmap='YlOrRd')  
+    ax.set_xlabel('Longitud')
+    ax.set_ylabel('Latitud')
+    ax.set_title(f'Interpolación Cúbica con Vecinos Más Cercanos en Sectores Faltantes para AQI {frame}')
 
-    #interpolado cúbico solamente
-    grid_interpolado_cubico = griddata((lat, lon), aqi, (latitud_mesh, longitud_mesh), method='cubic')
-    
-    ax.contourf(latitud_mesh, longitud_mesh, grid_interpolado_cubico, cmap='YlOrRd')  
-    ax.set_xlabel('Latitud')
-    ax.set_ylabel('Longitud')
-    ax.set_title(f'Interpolación Cúbica para AQI {frame}')
 fecha_hora_unicas = air_quality_data['fecha'].sort_values().unique()
 
 ani = FuncAnimation(fig, update, frames=fecha_hora_unicas, repeat=False, interval=100)
