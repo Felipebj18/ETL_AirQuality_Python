@@ -104,6 +104,57 @@ def change_data_types(dataframe):
     dataframe['hora'] = pd.to_datetime(dataframe['hora'], format='%H:%M:%S').dt.time
     return dataframe
 
+def generate_interpolation_dataframe(dataframe):
+    fecha_hora_unicas = dataframe['fecha'].unique()
+    interpolations = []
+
+    for date_time in fecha_hora_unicas:
+        df_hora = obtener_registros_por_hora(dataframe, date_time)
+
+        lat = df_hora['latitud']
+        lon = df_hora['longitud']
+        aqi = df_hora['aqi']
+
+        longitud_grid = np.linspace(lon.min(), lon.max(), 100)
+        latitud_grid = np.linspace(lat.min(), lat.max(), 100)
+        longitud_mesh, latitud_mesh = np.meshgrid(longitud_grid, latitud_grid)
+
+        grid_interpolado_cubico = griddata((lon, lat), aqi, (longitud_mesh, latitud_mesh), method='cubic')
+        puntos_faltantes = np.isnan(grid_interpolado_cubico)
+        grid_interpolado_vecinos = griddata((lon, lat), aqi, (longitud_mesh, latitud_mesh), method='nearest')
+        grid_interpolado_combinado = np.where(puntos_faltantes, grid_interpolado_vecinos, grid_interpolado_cubico)
+
+        interpolations.append(grid_interpolado_combinado)
+
+    interpolation_df = pd.DataFrame({
+        "fecha": fecha_hora_unicas,
+        "interpolacion": interpolations
+    })
+
+    return interpolation_df
+
+def calculate_daily_interpolation_means(dataframe):
+    # Crear una lista para almacenar los datos de salida
+    daily_means = []
+
+    for index, row in dataframe.iterrows():
+        # Obtener la fecha y la matriz de interpolación
+        date = row['fecha']
+        interpolation_matrix = row['interpolacion']
+
+        # Calcular el promedio de la matriz de interpolación
+        mean_interpolation = np.mean(interpolation_matrix)
+
+        # Almacenar la fecha y el promedio en la lista de resultados
+        daily_means.append([date, mean_interpolation])
+
+    # Crear un DataFrame a partir de la lista de resultados
+    daily_mean_df = pd.DataFrame(daily_means, columns=['fecha', 'promedio_interpolacion'])
+
+    return daily_mean_df
+
+
+
 df_final = transform_data(customers_json)
 df_final['hora'] = df_final['hora'].astype(str)
 
